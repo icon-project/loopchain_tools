@@ -1,15 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """CLI tool for loopchain"""
 import inspect
 import os
+import traceback
 from collections import OrderedDict
 from pathlib import Path
 from sys import platform
 
+from earlgrey import MessageQueueService
 from tools import get_option_from_prompt
-
-from testcase.unittest.test_util import clean_up_temp_db_files, clean_up_mq
+from tools.util import clean_up_temp_db_files, clean_up_mq
 
 
 class BasicTool:
@@ -74,4 +73,40 @@ class BasicTool:
         os.system(f"make generate-proto")
 
     def make_essential_db(self):
-        print("make essential db")
+        from loopchain.utils.message_queue.stub_collection import StubCollection
+        from loopchain.channel.channel_inner_service import ChannelInnerStub
+        from loopchain import utils
+        import json
+
+        amqp_key = utils.get_private_ip() + ":7100"
+        print(f"\nEnter AMQP KEY. (default: {amqp_key})")
+        amqp_key = input(" >>  ") or amqp_key
+
+        amqp_target = "127.0.0.1"
+        print(f"\nEnter AMQP TARGET. (default: {amqp_target})")
+        amqp_target = input(" >>  ") or amqp_target
+
+        StubCollection().amqp_key = amqp_key
+        StubCollection().amqp_target = amqp_target
+        self._run_coroutine_until_complete(StubCollection().create_channel_stub('icon_dex'))
+
+        channel_stub: ChannelInnerStub = StubCollection().channel_stubs['icon_dex']
+        status = channel_stub.sync_task().get_status()
+
+        print(f"Node status\n{utils.pretty_json(json.dumps(status))}")
+        target_height = status['block_height']
+        print(f"\nEnter block height to make essential backup. (default: {target_height})")
+        target_height = input(" >>  ") or target_height
+
+        backup_path = channel_stub.sync_task().make_essential_backup(target_height)
+        print(f"essential backup path: {backup_path}")
+
+    def _run_coroutine_until_complete(self, coroutine_):
+        async def _run_with_handling_exception():
+            try:
+                await coroutine_
+            except Exception:
+                traceback.print_exc()
+
+        loop = MessageQueueService.loop
+        loop.run_until_complete(_run_with_handling_exception())

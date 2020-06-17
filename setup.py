@@ -16,19 +16,19 @@ setup_options = {
     'url': 'https://github.com/icon-project/loopchain_tools',
     'version': version,
     'author': 'ICON foundation',
-    'author_email': 'foo@icon.foundation',
+    'author_email': 't_core@iconloop.com',
     'packages': find_packages(),
     'license': "Apache License 2.0",
     'install_requires': list(open('requirements.txt')),
     'classifiers': [
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 1 - Planning',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7'
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3 :: Only'
     ]
 }
 
